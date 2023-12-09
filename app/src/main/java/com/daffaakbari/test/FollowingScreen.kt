@@ -6,5 +6,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun FollowingScreen() {
-    Text(text = "Following Screen", style = MaterialTheme.typography.displayLarge)
+    TopAppBarWithSearch("Following")
 }

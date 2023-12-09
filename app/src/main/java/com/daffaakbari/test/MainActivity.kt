@@ -44,6 +44,27 @@ fun MainScreen() {
     }
 }
 
+@kotlin.OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBarWithSearch(header: String) {
+    SmallTopAppBar(
+        title = {
+            Text(
+                text = header,
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        actions = {
+            IconButton(onClick = { /* Handle search action */ }) {
+                Icon(Icons.Filled.Search, contentDescription = "Search")
+            }
+        },
+        colors = TopAppBarDefaults.smallTopAppBarColors(
+            containerColor = Color.White
+        )
+    )
+}
 
 @Composable
 fun BottomBar(navController: NavHostController) {

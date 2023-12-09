@@ -21,37 +21,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.SmallTopAppBar
 import androidx.annotation.OptIn
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.graphics.Shape
 
 @Composable
 fun HomeScreen() {
     Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBarWithSearch()
+        TopAppBarWithSearch("Home")
         Content()
     }
-}
-
-@kotlin.OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopAppBarWithSearch() {
-    SmallTopAppBar(
-        title = {
-            Text(
-                text = "Home",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        actions = {
-            IconButton(onClick = { /* Handle search action */ }) {
-                Icon(Icons.Filled.Search, contentDescription = "Search")
-            }
-        },
-        colors = TopAppBarDefaults.smallTopAppBarColors(
-            containerColor = Color.White
-        )
-    )
 }
 
 data class SpaceItem(val spaceName: String, val description: String, val isFollowed: Boolean)
@@ -74,9 +53,6 @@ fun Content() {
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
-        listSpace.forEach { item ->
-
-        }
         items(count = 5) { index -> // Replace with actual data source
             SpaceListItem(
                 spaceName = "Space Name $index",
@@ -93,6 +69,9 @@ fun SpaceListItem(spaceName: String, description: String, isFollowed: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(8.dp)
+            .background(Color.LightGray, CircleShape)
+            .border(2.dp, Color.Transparent, CircleShape)
             .padding(16.dp)
     ) {
         Image(
