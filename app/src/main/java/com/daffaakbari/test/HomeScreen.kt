@@ -53,11 +53,11 @@ fun Content() {
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
-        items(count = 5) { index -> // Replace with actual data source
+        items(count = listSpace.size) { index ->
             SpaceListItem(
-                spaceName = "Space Name $index",
-                description = "Description $index",
-                isFollowed = index % 2 == 0 // Just a placeholder for alternating follow state
+                spaceName = listSpace[index].spaceName,
+                description = listSpace[index].description,
+                isFollowed = listSpace[index].isFollowed
             )
         }
     }
