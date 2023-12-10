@@ -1,6 +1,7 @@
 package com.daffaakbari.test
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -54,6 +55,36 @@ fun TopAppBarWithSearch(header: String) {
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+        },
+        actions = {
+            IconButton(onClick = { /* Handle search action */ }) {
+                Icon(Icons.Filled.Search, contentDescription = "Search")
+            }
+        },
+        colors = TopAppBarDefaults.smallTopAppBarColors(
+            containerColor = Color.White
+        )
+    )
+}
+
+@kotlin.OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBackBarWithSearch() {
+    SmallTopAppBar(
+        title = {
+            Text(
+                text = "",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = { /* do something */ }) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Localized description"
+                )
+            }
         },
         actions = {
             IconButton(onClick = { /* Handle search action */ }) {
@@ -125,6 +156,7 @@ sealed class NavigationItem(val route: String, val icon: ImageVector, val title:
     object Spaces : NavigationItem("spaces", Icons.Filled.Email, "Spaces")
     object Following : NavigationItem("following", Icons.Filled.List, "Following")
     object Profile : NavigationItem("profile", Icons.Filled.Person, "Profile")
+    object Detail : NavigationItem("detail", Icons.Filled.Info, "Detail")
 }
 
 @Preview(showBackground = true)

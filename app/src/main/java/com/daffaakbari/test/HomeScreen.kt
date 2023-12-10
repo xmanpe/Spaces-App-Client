@@ -24,19 +24,23 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.graphics.Shape
+import androidx.navigation.NavController
+import androidx.navigation.NavHost
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavHostController) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBarWithSearch("Home")
-        Content()
+        Content(navController)
     }
 }
 
 data class SpaceItem(val spaceName: String, val description: String, val isFollowed: Boolean)
 
 @Composable
-fun Content() {
+fun Content(navController: NavHostController) {
     val listSpace = listOf(
         SpaceItem("Space Name 1", "Description 1", true),
         SpaceItem("Space Name 2", "Description 2", false),
@@ -57,21 +61,33 @@ fun Content() {
             SpaceListItem(
                 spaceName = listSpace[index].spaceName,
                 description = listSpace[index].description,
-                isFollowed = listSpace[index].isFollowed
+                isFollowed = listSpace[index].isFollowed,
+                navController = navController
             )
         }
     }
 }
 
 @Composable
-fun SpaceListItem(spaceName: String, description: String, isFollowed: Boolean) {
+fun SpaceListItem(spaceName: String, description: String, isFollowed: Boolean, navController: NavHostController) {
+    fun NavigateToDetailSpace() {
+        navController.navigate("detail") {
+            launchSingleTop = true
+            restoreState = true
+            popUpTo(navController.graph.startDestinationId) {
+                saveState = true
+            }
+        }
+    }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .fillMaxWidth()
             .padding(8.dp)
+            .fillMaxWidth()
             .background(Color.LightGray, CircleShape)
             .border(2.dp, Color.Transparent, CircleShape)
+            .clickable { NavigateToDetailSpace() }
             .padding(16.dp)
     ) {
         Image(
@@ -131,9 +147,10 @@ fun FollowButton(isFollowed: Boolean, shape: Shape = CircleShape) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen()
-}
+//JELASIN GW BUAT APA INI DAP
+//@Preview(showBackground = true)
+//@Composable
+//fun HomeScreenPreview() {
+//    HomeScreen()
+//}
 
