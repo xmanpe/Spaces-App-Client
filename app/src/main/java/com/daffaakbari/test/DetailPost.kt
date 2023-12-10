@@ -15,9 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +46,8 @@ import androidx.compose.ui.unit.sp
 fun DetailPost() {
     TopAppBackBarWithSearch()
     HeaderDetailPost()
+    PostWithoutImage(true, 300)
+    PostWithoutImage(false, 480)
 }
 
 @Composable
@@ -93,7 +100,8 @@ fun HeaderDetailPost() {
             Text(text = "UMN", fontSize = 24.sp, style = MaterialTheme.typography.titleMedium)
             Text(text = "@umnofficial", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Ayo kita ngobrol - ngobrol tentang kampus tercint kita ini! Langsung follow akun kita ya gais.",
-                 style = MaterialTheme.typography.bodyMedium)
+                 style = MaterialTheme.typography.bodyMedium
+            )
         }
 
         // Button
@@ -132,6 +140,113 @@ fun HeaderDetailPost() {
                     .clip(CircleShape)
             ) {
                 Text(text = "Information")
+            }
+        }
+    }
+}
+
+@Composable
+fun PostWithoutImage(liked: Boolean, jarak: Int) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = jarak.dp)
+            .padding(16.dp)
+            .background(Color.LightGray, RoundedCornerShape(10.dp))
+            .border(2.dp, Color.Transparent, RoundedCornerShape(10.dp))
+            .padding(8.dp)
+    ) {
+        // User post
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.house_01), // Replace with actual image resource
+                contentDescription = "Space Image",
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(text = "@kafijowo • ", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "23m", style = MaterialTheme.typography.bodyMedium)
+        }
+
+        // Desc Post
+        Text(text = "Ayo gais join J-CAFEST! Gacuma para wibo doang yang boleh ikut, lu semua boleh kok!!",
+             style = MaterialTheme.typography.bodyMedium,
+             modifier = Modifier
+                 .fillMaxWidth()
+                 .padding(4.dp)
+        )
+
+        // Tindakan post
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Row {
+                Button(
+                    onClick = { /* Handle follow action */ },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    border = BorderStroke(1.dp, Color.LightGray),
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                        contentDescription = "Jumlah Like"
+                    )
+                    Text(text = "7")
+                }
+
+                Button(
+                    onClick = { /* Handle follow action */ },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    border = BorderStroke(1.dp, Color.LightGray),
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        Icons.Rounded.Delete,
+                        contentDescription = "Jumlah Dislike"
+                    )
+                    Text(text = "95")
+                }
+            }
+            Row {
+                Button(
+                    onClick = { /* Handle follow action */ },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    border = BorderStroke(1.dp, Color.LightGray),
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        Icons.Rounded.Send,
+                        contentDescription = "Jumlah Comment"
+                    )
+                    Text(text = " | 4 Comments")
+                }
             }
         }
     }
