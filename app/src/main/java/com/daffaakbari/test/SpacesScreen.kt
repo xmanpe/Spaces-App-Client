@@ -29,8 +29,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SpacesScreen() {
-    TopAppBarWithSearch("Spaces")
-    NoSpaceCreated()
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBarWithSearch("Spaces")
+        NoSpaceCreated()
+    }
 }
 
 @Composable

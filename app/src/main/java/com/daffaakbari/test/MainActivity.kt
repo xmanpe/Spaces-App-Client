@@ -157,6 +157,8 @@ sealed class NavigationItem(val route: String, val icon: ImageVector, val title:
     object Following : NavigationItem("following", Icons.Filled.List, "Following")
     object Profile : NavigationItem("profile", Icons.Filled.Person, "Profile")
     object Detail : NavigationItem("detail", Icons.Filled.Info, "Detail")
+    object Login : NavigationItem("login", Icons.Filled.Check, "Login")
+    object Register : NavigationItem("register", Icons.Filled.Create, "Register")
 }
 
 @Preview(showBackground = true)

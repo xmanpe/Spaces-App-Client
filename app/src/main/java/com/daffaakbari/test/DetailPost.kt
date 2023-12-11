@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,10 +45,12 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DetailPost() {
-    TopAppBackBarWithSearch()
-    HeaderDetailPost()
-    PostWithoutImage(true, 300)
-    PostWithoutImage(false, 480)
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBackBarWithSearch()
+        HeaderDetailPost()
+        PostWithoutImage(true)
+        PostWithoutImage(false)
+    }
 }
 
 @Composable
@@ -55,8 +58,7 @@ fun HeaderDetailPost() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 50.dp)
-            .padding(16.dp)
+            .padding(8.dp)
     ) {
         // Logo dan keterangan angka
         Row(
@@ -146,11 +148,10 @@ fun HeaderDetailPost() {
 }
 
 @Composable
-fun PostWithoutImage(liked: Boolean, jarak: Int) {
+fun PostWithoutImage(liked: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = jarak.dp)
             .padding(16.dp)
             .background(Color.LightGray, RoundedCornerShape(10.dp))
             .border(2.dp, Color.Transparent, RoundedCornerShape(10.dp))
