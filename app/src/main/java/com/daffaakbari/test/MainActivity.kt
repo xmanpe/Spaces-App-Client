@@ -1,5 +1,6 @@
 package com.daffaakbari.test
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -18,24 +19,49 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.daffaakbari.test.session.PreferenceDatastore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 val iconActiveColor = Color.Black
 val iconInactiveColor = Color(0xFFA0A0A0)
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("CoroutineCreationDuringComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            var preferenceDatastore = PreferenceDatastore(this)
+            val navController = rememberNavController()
             AppTheme {
-                MainScreen()
+                // Cek Session
+                CoroutineScope(Dispatchers.IO).launch {
+                    preferenceDatastore.getSession().collect{
+                        withContext(Dispatchers.Main) {
+                            Log.d("session", it.toString())
+                        }
+                    }
+                }
+                MainScreen(navController)
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
-    val navController = rememberNavController()
+fun LogRegScreen(navController: NavHostController) {
+    Scaffold { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            NavigationGraph(navController = navController)
+        }
+    }
+}
+
+@Composable
+fun MainScreen(navController: NavHostController) {
     Scaffold(
         bottomBar = { BottomBar(navController) }
     ) { innerPadding ->
@@ -157,14 +183,15 @@ sealed class NavigationItem(val route: String, val icon: ImageVector, val title:
     object Following : NavigationItem("following", Icons.Filled.List, "Following")
     object Profile : NavigationItem("profile", Icons.Filled.Person, "Profile")
     object Detail : NavigationItem("detail", Icons.Filled.Info, "Detail")
+    object CreateSpace : NavigationItem("createSpace", Icons.Filled.Build, "CreateSpace")
     object Login : NavigationItem("login", Icons.Filled.Check, "Login")
     object Register : NavigationItem("register", Icons.Filled.Create, "Register")
 }
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    AppTheme {
-        MainScreen()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    AppTheme {
+//        MainScreen()
+//    }
+//}

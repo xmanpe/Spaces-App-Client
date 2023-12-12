@@ -1,11 +1,12 @@
 package com.daffaakbari.test
 
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
@@ -16,25 +17,53 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
 @Composable
 fun Login(navController: NavHostController) {
-    fun NavigateToHome() {
-        navController.navigate("home") {
-            launchSingleTop = true
-            restoreState = true
-            popUpTo(navController.graph.startDestinationId) {
-                saveState = true
-            }
+
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    fun HandleLogin(username: String, password: String) {
+        if(username.isEmpty() || password.isEmpty()) {
+            return
         }
+
+        val db = Firebase.firestore
+
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    Log.d("LOGIN", "${document.id} => ${document.data}")
+                    if(document.data["username"].toString() == username && document.data["password"].toString() == password) {
+
+                        navController.navigate("home") {
+                            launchSingleTop = true
+                            restoreState = true
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                        }
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w("LOGIN", "Error getting documents.", exception)
+            }
     }
 
     fun NavigateToRegister() {
@@ -47,9 +76,6 @@ fun Login(navController: NavHostController) {
         }
     }
 
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -60,15 +86,18 @@ fun Login(navController: NavHostController) {
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Username") }
+            label = { Text("Username") },
+            singleLine = true
         )
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") }
+            label = { Text("Password") },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation()
         )
         Button(
-            onClick = { NavigateToHome() },
+            onClick = { HandleLogin(username, password) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Black,
                 contentColor = Color.White
