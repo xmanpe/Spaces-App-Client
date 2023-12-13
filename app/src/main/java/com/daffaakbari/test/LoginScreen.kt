@@ -28,11 +28,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
+import com.daffaakbari.test.session.PreferenceDatastore
+import com.daffaakbari.test.session.SessionModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
-fun Login(navController: NavHostController) {
+fun Login(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -49,8 +54,14 @@ fun Login(navController: NavHostController) {
             .addOnSuccessListener { result ->
                 for (document in result) {
                     Log.d("LOGIN", "${document.id} => ${document.data}")
+                    // Check Username dan Password
                     if(document.data["username"].toString() == username && document.data["password"].toString() == password) {
-
+                        // Set username and email User to Session
+                        CoroutineScope(Dispatchers.IO).launch {
+                            var modelSession = SessionModel(document.data["username"].toString(), document.data["email"].toString())
+                            preferenceDatastore.setSession(modelSession)
+                        }
+                        // Navigate to page Home
                         navController.navigate("home") {
                             launchSingleTop = true
                             restoreState = true

@@ -33,11 +33,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 
 @Composable
-fun DetailSpace() {
+fun DetailSpace(navController: NavHostController) {
     Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBackBarWithSearch()
+        TopAppBackBarWithSearch(navController)
         HeaderDetailSpace()
         PostWithoutImage(true)
         PostWithoutImage(false)

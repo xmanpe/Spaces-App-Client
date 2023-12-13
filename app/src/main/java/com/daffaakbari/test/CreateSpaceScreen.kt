@@ -1,5 +1,6 @@
 package com.daffaakbari.test
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -25,18 +26,35 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.daffaakbari.test.session.PreferenceDatastore
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun CreateSpace(navController: NavHostController) {
+fun CreateSpace(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
     var name by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    fun HandleCreateSpace(username: String, name: String, description: String) {
-        if(username.isEmpty() || name.isEmpty() || description.isEmpty()) {
+    // Take currUser Username
+    var currUsername by remember { mutableStateOf("") }
+    CoroutineScope(Dispatchers.IO).launch {
+        preferenceDatastore.getSession().collect{
+            withContext(Dispatchers.Main) {
+                Log.d("CreateSpace", it.toString())
+                currUsername = it.username
+            }
+        }
+    }
+
+    fun HandleCreateSpace(username: String, name: String, description: String, currUsername: String) {
+        if(username.isEmpty() || name.isEmpty() || description.isEmpty() || currUsername.isEmpty()) {
             return
         }
 
@@ -45,7 +63,8 @@ fun CreateSpace(navController: NavHostController) {
         val user = hashMapOf(
             "username" to username,
             "name" to name,
-            "description" to description
+            "description" to description,
+            "usernameUser" to currUsername
         )
 
         db.collection("spaces")
@@ -70,7 +89,7 @@ fun CreateSpace(navController: NavHostController) {
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize()
     ) {
-        Text(text = "Register", fontSize = 24.sp)
+        Text(text = "Create Space", fontSize = 24.sp)
 
         OutlinedTextField(
             value = username,
@@ -93,7 +112,7 @@ fun CreateSpace(navController: NavHostController) {
         )
 
         Button(
-            onClick = { HandleCreateSpace(username, name, description) },
+            onClick = { HandleCreateSpace(username, name, description, currUsername) },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Black,
                 contentColor = Color.White

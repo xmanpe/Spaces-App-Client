@@ -4,17 +4,22 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.daffaakbari.test.session.PreferenceDatastore
 
 @Composable
-fun NavigationGraph(navController: NavHostController) {
-    NavHost(navController, startDestination = NavigationItem.Login.route) {
+fun NavigationGraph(
+    navController: NavHostController,
+    preferenceDatastore: PreferenceDatastore,
+    firstDestination: String
+) {
+    NavHost(navController, startDestination = firstDestination) {
         composable(NavigationItem.Home.route) { HomeScreen(navController) }
-        composable(NavigationItem.Spaces.route) { SpacesScreen(navController) }
+        composable(NavigationItem.Spaces.route) { SpacesScreen(navController, preferenceDatastore) }
         composable(NavigationItem.Following.route) { FollowingScreen() }
         composable(NavigationItem.Profile.route) { ProfileScreen() }
-        composable(NavigationItem.Detail.route) { DetailSpace() }
-        composable(NavigationItem.Login.route) { Login(navController) }
+        composable(NavigationItem.Detail.route) { DetailSpace(navController) }
+        composable(NavigationItem.Login.route) { Login(navController, preferenceDatastore) }
         composable(NavigationItem.Register.route) { Register(navController) }
-        composable(NavigationItem.CreateSpace.route) { CreateSpace(navController) }
+        composable(NavigationItem.CreateSpace.route) { CreateSpace(navController, preferenceDatastore) }
     }
 }

@@ -12,6 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -20,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.daffaakbari.test.session.PreferenceDatastore
+import com.daffaakbari.test.session.SessionModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -34,39 +39,60 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            var checkCurrUsername by remember { mutableStateOf("") }
             var preferenceDatastore = PreferenceDatastore(this)
             val navController = rememberNavController()
-            AppTheme {
-                // Cek Session
-                CoroutineScope(Dispatchers.IO).launch {
-                    preferenceDatastore.getSession().collect{
-                        withContext(Dispatchers.Main) {
-                            Log.d("session", it.toString())
-                        }
+            // Delete Session for development
+//            CoroutineScope(Dispatchers.IO).launch {
+//                var modelSession = SessionModel("", "")
+//                preferenceDatastore.setSession(modelSession)
+//            }
+            // Cek Session
+            CoroutineScope(Dispatchers.IO).launch {
+                preferenceDatastore.getSession().collect{
+                    withContext(Dispatchers.Main) {
+                        Log.d("session", it.toString())
+                        checkCurrUsername = it.username
                     }
                 }
-                MainScreen(navController)
+            }
+
+            AppTheme {
+                if(checkCurrUsername.isEmpty()) {
+                    LogRegScreen(navController, preferenceDatastore)
+                }
+                else {
+                    MainScreen(navController, preferenceDatastore, checkCurrUsername)
+                }
             }
         }
     }
 }
 
 @Composable
-fun LogRegScreen(navController: NavHostController) {
+fun LogRegScreen(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
     Scaffold { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            NavigationGraph(navController = navController)
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
+            NavigationGraph(navController, preferenceDatastore, NavigationItem.Login.route)
         }
     }
 }
 
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen(
+    navController: NavHostController,
+    preferenceDatastore: PreferenceDatastore,
+    currUsername: String
+) {
     Scaffold(
-        bottomBar = { BottomBar(navController) }
+        bottomBar = { if (currUsername.isNotEmpty()) BottomBar(navController) }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            NavigationGraph(navController = navController)
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
+            NavigationGraph(navController, preferenceDatastore, NavigationItem.Home.route)
         }
     }
 }
@@ -95,7 +121,7 @@ fun TopAppBarWithSearch(header: String) {
 
 @kotlin.OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBackBarWithSearch() {
+fun TopAppBackBarWithSearch(navController: NavHostController) {
     SmallTopAppBar(
         title = {
             Text(
@@ -105,10 +131,10 @@ fun TopAppBackBarWithSearch() {
             )
         },
         navigationIcon = {
-            IconButton(onClick = { /* do something */ }) {
+            IconButton(onClick = { navController.popBackStack() }) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Localized description"
+                    contentDescription = "Back Button"
                 )
             }
         },
