@@ -56,7 +56,7 @@ import kotlinx.coroutines.withContext
 
 data class OwnedSpaceItem(
     val spaceName: String,
-    val usernameSpace: String,
+    val spaceUsername: String,
     val description: String,
     val navController: NavHostController
 )
@@ -64,6 +64,17 @@ data class OwnedSpaceItem(
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun SpacesScreen(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
+    // Function to navigate to create space
+    fun NavigateToCreateSpaces() {
+        navController.navigate("CreateSpace") {
+            launchSingleTop = true
+            restoreState = true
+            popUpTo(navController.graph.startDestinationId) {
+                saveState = true
+            }
+        }
+    }
+
     // Take currUser Username
     var currUsername by remember { mutableStateOf("") }
     CoroutineScope(Dispatchers.IO).launch {
@@ -75,7 +86,7 @@ fun SpacesScreen(navController: NavHostController, preferenceDatastore: Preferen
         }
     }
 
-    // Check if currUser have a space
+    // Get all spaces
     var listOwnedSpace by remember { mutableStateOf(mutableListOf<OwnedSpaceItem>()) }
     val db = Firebase.firestore
     db.collection("spaces")
@@ -83,12 +94,16 @@ fun SpacesScreen(navController: NavHostController, preferenceDatastore: Preferen
         .addOnSuccessListener { result ->
             for (document in result) {
                 Log.d("SPACES", "${document.id} => ${document.data}")
+                // Check if currUser have a space
                 if(document.data["usernameUser"].toString() == currUsername) {
-                    listOwnedSpace.add(OwnedSpaceItem(
-                        document.data["name"].toString(),
-                        document.data["username"].toString(),
-                        document.data["description"].toString(),
-                        navController))
+                    listOwnedSpace.add(
+                        OwnedSpaceItem(
+                            document.data["name"].toString(),
+                            document.data["username"].toString(),
+                            document.data["description"].toString(),
+                            navController
+                        )
+                    )
                 }
             }
         }
@@ -97,18 +112,38 @@ fun SpacesScreen(navController: NavHostController, preferenceDatastore: Preferen
         }
 
     // Remove duplicate space
-    val distinctListOwnedSpace = listOwnedSpace.distinctBy { it.usernameSpace }
+    val distinctListOwnedSpace = listOwnedSpace.distinctBy { it.spaceUsername }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBarWithSearch("Spaces")
         if(distinctListOwnedSpace.size > 0) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
+            ) {
                 items(count = distinctListOwnedSpace.size) { index ->
                     OwnedSpaceListItem(
                         spaceName = distinctListOwnedSpace[index].spaceName,
                         description = distinctListOwnedSpace[index].description,
                         navController = distinctListOwnedSpace[index].navController
                     )
+                }
+                item {
+                    Button(
+                        onClick = { NavigateToCreateSpaces() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        ),
+                        border = BorderStroke(1.dp, Color.Black),
+                        shape = CircleShape,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .height(36.dp)
+                            .clip(CircleShape)
+                    ) {
+                        Text(text = "New Space")
+                    }
                 }
             }
         }

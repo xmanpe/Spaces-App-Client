@@ -13,7 +13,7 @@ fun NavigationGraph(
     firstDestination: String
 ) {
     NavHost(navController, startDestination = firstDestination) {
-        composable(NavigationItem.Home.route) { HomeScreen(navController) }
+        composable(NavigationItem.Home.route) { HomeScreen(navController, preferenceDatastore) }
         composable(NavigationItem.Spaces.route) { SpacesScreen(navController, preferenceDatastore) }
         composable(NavigationItem.Following.route) { FollowingScreen() }
         composable(NavigationItem.Profile.route) { ProfileScreen() }
