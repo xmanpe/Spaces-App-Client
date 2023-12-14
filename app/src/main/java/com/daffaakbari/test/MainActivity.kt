@@ -42,11 +42,6 @@ class MainActivity : ComponentActivity() {
             var checkCurrUsername by remember { mutableStateOf("") }
             var preferenceDatastore = PreferenceDatastore(this)
             val navController = rememberNavController()
-            // Delete Session for development
-//            CoroutineScope(Dispatchers.IO).launch {
-//                var modelSession = SessionModel("", "")
-//                preferenceDatastore.setSession(modelSession)
-//            }
             // Cek Session
             CoroutineScope(Dispatchers.IO).launch {
                 preferenceDatastore.getSession().collect{
@@ -142,6 +137,23 @@ fun TopAppBackBarWithSearch(navController: NavHostController) {
             IconButton(onClick = { /* Handle search action */ }) {
                 Icon(Icons.Filled.Search, contentDescription = "Search")
             }
+        },
+        colors = TopAppBarDefaults.smallTopAppBarColors(
+            containerColor = Color.White
+        )
+    )
+}
+
+@kotlin.OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBarTitleOnly(header: String) {
+    SmallTopAppBar(
+        title = {
+            Text(
+                text = header,
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         },
         colors = TopAppBarDefaults.smallTopAppBarColors(
             containerColor = Color.White

@@ -1,5 +1,6 @@
 package com.daffaakbari.test
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,16 +17,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,23 +42,95 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
 @Composable
-fun DetailSpace(navController: NavHostController) {
+fun DetailSpace(navController: NavHostController, usernameSpace: String) {
+    var spaceName by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var totalFollower = 0
+
+    // Get space data
+    val db = Firebase.firestore
+    db.collection("spaces")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("DetailSpace", "${document.id} => ${document.data}")
+                if(document.data["username"].toString() == usernameSpace) {
+                    spaceName = document.data["name"].toString()
+                    description = document.data["description"].toString()
+                }
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("DetailSpace", "Error getting documents.", exception)
+        }
+
+    // Get all follow
+    var listFollow by remember { mutableStateOf(mutableListOf<SpaceFollowing>()) }
+    db.collection("follow")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("HomeGetAllFollow", "${document.id} => ${document.data}")
+                listFollow.add(
+                    SpaceFollowing(
+                        document.data["spaceUsername"].toString(),
+                        document.data["followUsername"].toString(),
+                    )
+                )
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("HomeGetAllFollow", "Error getting documents.", exception)
+        }
+    // Remvoe duplicate follow
+    val distinctlistFollow = listFollow.distinctBy { it.spaceUsername }
+
+    // Count follower
+    for(item in distinctlistFollow) {
+        if(item.spaceUsername == usernameSpace) {
+            totalFollower++
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBackBarWithSearch(navController)
-        HeaderDetailSpace()
+        HeaderDetailSpace(spaceName, usernameSpace, description, totalFollower.toString())
         PostWithoutImage(true)
         PostWithoutImage(false)
+    }
+    Column(
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.End,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        FloatingActionButton(
+            onClick = {  },
+            shape = CircleShape,
+            containerColor = Color.Black,
+            contentColor = Color.White
+        ) {
+            Icon(Icons.Filled.Add, "Floating action button.")
+        }
     }
 }
 
 @Composable
-fun HeaderDetailSpace() {
+fun HeaderDetailSpace(
+    spaceName: String,
+    usernameSpace: String,
+    description: String,
+    totalFollwer: String
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(16.dp)
     ) {
         // Logo dan keterangan angka
         Row(
@@ -81,7 +161,7 @@ fun HeaderDetailSpace() {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "9340", fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
+                    Text(text = totalFollwer, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
                     Text(text = "People", fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
                 }
             }
@@ -91,11 +171,9 @@ fun HeaderDetailSpace() {
         Column(
             modifier = Modifier.padding(4.dp)
         ) {
-            Text(text = "UMN", fontSize = 24.sp, style = MaterialTheme.typography.titleMedium)
-            Text(text = "@umnofficial", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Ayo kita ngobrol - ngobrol tentang kampus tercint kita ini! Langsung follow akun kita ya gais.",
-                 style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = spaceName, fontSize = 24.sp, style = MaterialTheme.typography.titleMedium)
+            Text(text = "@$usernameSpace", style = MaterialTheme.typography.bodyMedium)
+            Text(text = description, style = MaterialTheme.typography.bodyMedium)
         }
 
         // Button

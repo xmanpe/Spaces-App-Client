@@ -20,10 +20,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -93,7 +95,7 @@ fun SpacesScreen(navController: NavHostController, preferenceDatastore: Preferen
         .get()
         .addOnSuccessListener { result ->
             for (document in result) {
-                Log.d("SPACES", "${document.id} => ${document.data}")
+//                Log.d("SPACES", "${document.id} => ${document.data}")
                 // Check if currUser have a space
                 if(document.data["usernameUser"].toString() == currUsername) {
                     listOwnedSpace.add(
@@ -124,26 +126,10 @@ fun SpacesScreen(navController: NavHostController, preferenceDatastore: Preferen
                 items(count = distinctListOwnedSpace.size) { index ->
                     OwnedSpaceListItem(
                         spaceName = distinctListOwnedSpace[index].spaceName,
+                        spaceUsername = distinctListOwnedSpace[index].spaceUsername,
                         description = distinctListOwnedSpace[index].description,
                         navController = distinctListOwnedSpace[index].navController
                     )
-                }
-                item {
-                    Button(
-                        onClick = { NavigateToCreateSpaces() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black,
-                            contentColor = Color.White
-                        ),
-                        border = BorderStroke(1.dp, Color.Black),
-                        shape = CircleShape,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .height(36.dp)
-                            .clip(CircleShape)
-                    ) {
-                        Text(text = "New Space")
-                    }
                 }
             }
         }
@@ -151,12 +137,34 @@ fun SpacesScreen(navController: NavHostController, preferenceDatastore: Preferen
             NoSpaceCreated(navController)
         }
     }
+    if(distinctListOwnedSpace.size > 0) {
+        Column(
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier.fillMaxSize().padding(16.dp)
+        ) {
+            FloatingActionButton(
+                onClick = { NavigateToCreateSpaces() },
+                shape = CircleShape,
+                containerColor = Color.Black,
+                contentColor = Color.White
+            ) {
+                Icon(Icons.Filled.Create, "Floating action button.")
+            }
+        }
+    }
 }
 
 @Composable
-fun OwnedSpaceListItem(spaceName: String, description: String, navController: NavHostController) {
+fun OwnedSpaceListItem(spaceName: String, spaceUsername: String, description: String, navController: NavHostController) {
     fun NavigateToDetailSpace() {
-        navController.navigate("detail") {
+        navController.navigate(
+            "detail/{username}"
+                .replace(
+                    oldValue = "{username}",
+                    newValue = spaceUsername
+                )
+        ) {
             launchSingleTop = true
             restoreState = true
             popUpTo(navController.graph.startDestinationId) {

@@ -106,6 +106,16 @@ fun Content(navController: NavHostController, preferenceDatastore: PreferenceDat
         return false
     }
 
+//    fun checkCurrUserFollowSpace(currUsername: String, spaceUsername: String): Boolean {
+//        var follower = distinctlistFollow.filter { it.followUsername == currUsername && it.spaceUsername == spaceUsername }
+//        if(follower.size > 0) {
+//            return true
+//        }
+//        else {
+//            return false
+//        }
+//    }
+
     // Get all spaces
     var listSpace by remember { mutableStateOf(mutableListOf<SpaceItem>()) }
 
@@ -158,7 +168,13 @@ fun SpaceListItem(
     currUsername: String
 ) {
     fun NavigateToDetailSpace() {
-        navController.navigate("detail") {
+        navController.navigate(
+            "detail/{username}"
+                .replace(
+                    oldValue = "{username}",
+                    newValue = spaceUsername
+                )
+        ) {
             launchSingleTop = true
             restoreState = true
             popUpTo(navController.graph.startDestinationId) {

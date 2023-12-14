@@ -16,8 +16,13 @@ fun NavigationGraph(
         composable(NavigationItem.Home.route) { HomeScreen(navController, preferenceDatastore) }
         composable(NavigationItem.Spaces.route) { SpacesScreen(navController, preferenceDatastore) }
         composable(NavigationItem.Following.route) { FollowingScreen() }
-        composable(NavigationItem.Profile.route) { ProfileScreen() }
-        composable(NavigationItem.Detail.route) { DetailSpace(navController) }
+        composable(NavigationItem.Profile.route) { ProfileScreen(preferenceDatastore) }
+        composable("detail/{username}") { navBackStackEntry ->
+            val username = navBackStackEntry.arguments?.getString("username")
+            if (username != null) {
+                DetailSpace(navController, username)
+            }
+        }
         composable(NavigationItem.Login.route) { Login(navController, preferenceDatastore) }
         composable(NavigationItem.Register.route) { Register(navController) }
         composable(NavigationItem.CreateSpace.route) { CreateSpace(navController, preferenceDatastore) }
