@@ -63,6 +63,7 @@ data class SpaceFollowingDetail(
 
 data class PostDetail(
     val idPost: String,
+    val usernameSpace: String,
     val usernameUser: String,
     val description: String
 )
@@ -86,6 +87,7 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
     var isOwner by remember { mutableStateOf(false) }
     var isFollow by remember { mutableStateOf(false) }
     var totalFollower = 0
+    var totalPost = 0
 
     // For Dialog
     val openDialogCreatePost = remember { mutableStateOf(false) }
@@ -155,6 +157,7 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
                     listPost.add(
                         PostDetail(
                             document.id,
+                            document.data["usernameSpace"].toString(),
                             document.data["usernameUser"].toString(),
                             document.data["description"].toString(),
                         )
@@ -180,6 +183,12 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
         }
     }
 
+    for(item in distinctListPost) {
+        if(item.usernameSpace == usernameSpace) {
+            totalPost++
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBackBarWithSearch(navController)
         HeaderDetailSpace(
@@ -187,6 +196,7 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
             usernameSpace,
             description,
             totalFollower.toString(),
+            totalPost.toString(),
             currUsername,
             documentFollow,
             isFollow,
@@ -241,6 +251,7 @@ fun HeaderDetailSpace(
     usernameSpace: String,
     description: String,
     totalFollwer: String,
+    totalPost: String,
     currUsername: String,
     documentFollow: String,
     isFollow: Boolean,
@@ -308,7 +319,7 @@ fun HeaderDetailSpace(
                 Column(
                   horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "2401", fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
+                    Text(text = totalPost, fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
                     Text(text = "Posts", fontSize = 14.sp, style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.width(32.dp))
@@ -591,7 +602,7 @@ fun PostWithoutImage(idPost: String, usernameUser: String, description: String, 
                         Icons.Rounded.Send,
                         contentDescription = "Jumlah Comment"
                     )
-                    Text(text = " | 4 Comments")
+                    Text(text = " | Comments")
                 }
             }
         }
