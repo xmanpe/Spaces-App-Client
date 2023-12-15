@@ -1,5 +1,6 @@
 package com.daffaakbari.test
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -11,9 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,9 +28,11 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,15 +46,60 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.daffaakbari.test.session.PreferenceDatastore
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+data class SpaceFollowingDetail(
+    val document: String,
+    val spaceUsername: String,
+    val followUsername: String
+)
 
+data class PostDetail(
+    val idPost: String,
+    val usernameUser: String,
+    val description: String
+)
+
+data class ListPostLike(
+    val idPost: String,
+    val usernameUser: String
+)
+
+data class ListPostDislike(
+    val idPost: String,
+    val usernameUser: String
+)
+
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun DetailSpace(navController: NavHostController, usernameSpace: String) {
+fun DetailSpace(navController: NavHostController, preferenceDatastore: PreferenceDatastore, usernameSpace: String) {
     var spaceName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var documentFollow by remember { mutableStateOf("") }
+    var isOwner by remember { mutableStateOf(false) }
+    var isFollow by remember { mutableStateOf(false) }
     var totalFollower = 0
+
+    // For Dialog
+    val openDialogCreatePost = remember { mutableStateOf(false) }
+
+    // Take currUser Username
+    var currUsername by remember { mutableStateOf("") }
+    CoroutineScope(Dispatchers.IO).launch {
+        preferenceDatastore.getSession().collect{
+            withContext(Dispatchers.Main) {
+//                Log.d("CreateSpace", it.toString())
+                currUsername = it.username
+            }
+        }
+    }
 
     // Get space data
     val db = Firebase.firestore
@@ -61,6 +111,9 @@ fun DetailSpace(navController: NavHostController, usernameSpace: String) {
                 if(document.data["username"].toString() == usernameSpace) {
                     spaceName = document.data["name"].toString()
                     description = document.data["description"].toString()
+                    if(document.data["usernameUser"].toString() == currUsername) {
+                        isOwner = true
+                    }
                 }
             }
         }
@@ -69,14 +122,15 @@ fun DetailSpace(navController: NavHostController, usernameSpace: String) {
         }
 
     // Get all follow
-    var listFollow by remember { mutableStateOf(mutableListOf<SpaceFollowing>()) }
+    var listFollow by remember { mutableStateOf(mutableListOf<SpaceFollowingDetail>()) }
     db.collection("follow")
         .get()
         .addOnSuccessListener { result ->
             for (document in result) {
 //                Log.d("HomeGetAllFollow", "${document.id} => ${document.data}")
                 listFollow.add(
-                    SpaceFollowing(
+                    SpaceFollowingDetail(
+                        document.id,
                         document.data["spaceUsername"].toString(),
                         document.data["followUsername"].toString(),
                     )
@@ -89,19 +143,68 @@ fun DetailSpace(navController: NavHostController, usernameSpace: String) {
     // Remvoe duplicate follow
     val distinctlistFollow = listFollow.distinctBy { it.spaceUsername }
 
-    // Count follower
+    // Get all post
+    var listPost by remember { mutableStateOf(mutableListOf<PostDetail>()) }
+
+    db.collection("posts")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("DetailGetPost", "${document.id} => ${document.data}")
+                if(document.data["usernameSpace"].toString() == usernameSpace) {
+                    listPost.add(
+                        PostDetail(
+                            document.id,
+                            document.data["usernameUser"].toString(),
+                            document.data["description"].toString(),
+                        )
+                    )
+                }
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("DetailGetPost", "Error getting documents.", exception)
+        }
+    // Remvoe duplicate post
+    val distinctListPost = listPost.distinctBy { it.description }
+
     for(item in distinctlistFollow) {
+        // Count follower
         if(item.spaceUsername == usernameSpace) {
             totalFollower++
+        }
+        // Set is space follow
+        if(item.followUsername == currUsername && item.spaceUsername == usernameSpace) {
+            isFollow = true
+            documentFollow = item.document
         }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBackBarWithSearch(navController)
-        HeaderDetailSpace(spaceName, usernameSpace, description, totalFollower.toString())
-        PostWithoutImage(true)
-        PostWithoutImage(false)
+        HeaderDetailSpace(
+            spaceName,
+            usernameSpace,
+            description,
+            totalFollower.toString(),
+            currUsername,
+            documentFollow,
+            isFollow,
+            isOwner
+        )
+        LazyColumn {
+            items(count = distinctListPost.size) { index ->
+                PostWithoutImage(
+                    idPost = distinctListPost[index].idPost,
+                    usernameUser = distinctListPost[index].usernameUser,
+                    description = distinctListPost[index].description,
+                    currUsername = currUsername
+                )
+            }
+        }
     }
+
+    // Fab Button
     Column(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End,
@@ -110,12 +213,24 @@ fun DetailSpace(navController: NavHostController, usernameSpace: String) {
             .padding(16.dp)
     ) {
         FloatingActionButton(
-            onClick = {  },
+            onClick = { openDialogCreatePost.value = !openDialogCreatePost.value },
             shape = CircleShape,
             containerColor = Color.Black,
             contentColor = Color.White
         ) {
             Icon(Icons.Filled.Add, "Floating action button.")
+        }
+    }
+
+    // Dialog atau modal for create post
+    when {
+        openDialogCreatePost.value -> {
+            DialogCreatePost(
+                onDismissRequest = { openDialogCreatePost.value = false },
+                onConfirmation = { openDialogCreatePost.value = false },
+                usernameSpace,
+                currUsername
+            )
         }
     }
 }
@@ -125,8 +240,47 @@ fun HeaderDetailSpace(
     spaceName: String,
     usernameSpace: String,
     description: String,
-    totalFollwer: String
+    totalFollwer: String,
+    currUsername: String,
+    documentFollow: String,
+    isFollow: Boolean,
+    isOwner: Boolean
 ) {
+    fun HandleFollow(username: String, currUsername: String) {
+        if(username.isEmpty() || currUsername.isEmpty()) {
+            return
+        }
+
+        val db = Firebase.firestore
+
+        val follow = hashMapOf(
+            "spaceUsername" to username,
+            "followUsername" to currUsername
+        )
+
+        db.collection("follow")
+            .add(follow)
+            .addOnSuccessListener { documentReference ->
+//                Log.d("HandleFollow", "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+//                Log.w("HandleFollow", "Error adding document", e)
+            }
+    }
+
+    fun HandleUnFollow(documentFollow: String) {
+        if(documentFollow.isEmpty()) {
+            return
+        }
+
+        val db = Firebase.firestore
+
+        db.collection("follow").document(documentFollow)
+            .delete()
+            .addOnSuccessListener { Log.d("Detail", "DocumentSnapshot successfully deleted!") }
+            .addOnFailureListener { e -> Log.w("Detail", "Error deleting document", e) }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -185,10 +339,17 @@ fun HeaderDetailSpace(
                 .padding(top = 10.dp)
         ) {
             Button(
-                onClick = { /* Handle follow action */ },
+                onClick =
+                {
+                    if(isFollow) {
+                        HandleUnFollow(documentFollow)
+                    } else if(isFollow == false) {
+                        HandleFollow(usernameSpace, currUsername)
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
-                    contentColor = Color.White
+                    containerColor = if(isFollow) Color.White else Color.Black,
+                    contentColor = if(isFollow) Color.Black else Color.White
                 ),
                 border = BorderStroke(1.dp, Color.Black),
                 shape = CircleShape,
@@ -196,7 +357,15 @@ fun HeaderDetailSpace(
                     .size(width = 180.dp, height = 36.dp)
                     .clip(CircleShape)
             ) {
-                Text(text = "Follow")
+                if(isOwner) {
+                    Text(text = "Owned")
+                }
+                else if(isFollow == true) {
+                    Text(text = "Following")
+                }
+                else if(isFollow == false) {
+                    Text(text = "Follow")
+                }
             }
 
             Button(
@@ -218,7 +387,112 @@ fun HeaderDetailSpace(
 }
 
 @Composable
-fun PostWithoutImage(liked: Boolean) {
+fun PostWithoutImage(idPost: String, usernameUser: String, description: String, currUsername: String) {
+    var totalLike = 0
+    var totalDislike = 0
+
+    val db = Firebase.firestore
+    // Get total like
+    var listLike by remember { mutableStateOf(mutableListOf<ListPostLike>()) }
+    db.collection("postslike")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("PostLike", "${document.id} => ${document.data}")
+                listLike.add(
+                    ListPostLike(
+                        idPost = document.data["idPost"].toString(),
+                        usernameUser = document.data["usernameUser"].toString()
+                    )
+                )
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("PostLike", "Error getting documents.", exception)
+        }
+    // Remove duplicate data
+    val distinctListLike = listLike.distinctBy { it.usernameUser }
+
+    // Get total dislike
+    var listDislike by remember { mutableStateOf(mutableListOf<ListPostDislike>()) }
+    db.collection("postsdislike")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("PostLike", "${document.id} => ${document.data}")
+                listDislike.add(
+                    ListPostDislike(
+                        idPost = document.data["idPost"].toString(),
+                        usernameUser = document.data["usernameUser"].toString()
+                    )
+                )
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("PostLike", "Error getting documents.", exception)
+        }
+    // Remove duplicate data
+    val distinctListDislike = listDislike.distinctBy { it.usernameUser }
+    Log.d("test1", distinctListLike.toString())
+    Log.d("test2", distinctListDislike.toString())
+
+    for(item in distinctListLike) {
+        if(item.idPost == idPost) {
+            totalLike++
+            Log.d("totallike", totalLike.toString())
+        }
+    }
+
+    for(item in distinctListDislike) {
+        if(item.idPost == idPost) {
+            totalDislike++
+        }
+    }
+
+    fun HandleLike(idPost: String, currUsername: String) {
+        if(idPost.isEmpty() || currUsername.isEmpty()) {
+            return
+        }
+
+        val db = Firebase.firestore
+
+        val like = hashMapOf(
+            "idPost" to idPost,
+            "usernameUser" to currUsername
+        )
+
+        db.collection("postslike")
+            .add(like)
+            .addOnSuccessListener { documentReference ->
+//                Log.d("CreatePost", "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+//                Log.w("CreatePost", "Error adding document", e)
+            }
+    }
+
+    fun HandleDislike(idPost: String, currUsername: String) {
+        if(idPost.isEmpty() || currUsername.isEmpty()) {
+            return
+        }
+
+        val db = Firebase.firestore
+
+        val dislike = hashMapOf(
+            "idPost" to idPost,
+            "usernameUser" to currUsername
+        )
+
+        db.collection("postsdislike")
+            .add(dislike)
+            .addOnSuccessListener { documentReference ->
+//                Log.d("CreatePost", "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+//                Log.w("CreatePost", "Error adding document", e)
+            }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -243,12 +517,12 @@ fun PostWithoutImage(liked: Boolean) {
                     .background(Color.LightGray)
             )
             Spacer(Modifier.width(8.dp))
-            Text(text = "@kafijowo • ", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "23m", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "@$usernameUser • ", style = MaterialTheme.typography.bodyMedium)
+//            Text(text = "23m", style = MaterialTheme.typography.bodyMedium)
         }
 
         // Desc Post
-        Text(text = "Ayo gais join J-CAFEST! Gacuma para wibo doang yang boleh ikut, lu semua boleh kok!!",
+        Text(text = description,
              style = MaterialTheme.typography.bodyMedium,
              modifier = Modifier
                  .fillMaxWidth()
@@ -265,7 +539,7 @@ fun PostWithoutImage(liked: Boolean) {
         ) {
             Row {
                 Button(
-                    onClick = { /* Handle follow action */ },
+                    onClick = { HandleLike(idPost, currUsername) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = Color.Black
@@ -276,14 +550,15 @@ fun PostWithoutImage(liked: Boolean) {
                         .clip(CircleShape)
                 ) {
                     Icon(
-                        if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+//                        if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                        Icons.Rounded.FavoriteBorder,
                         contentDescription = "Jumlah Like"
                     )
-                    Text(text = "7")
+                    Text(text = totalLike.toString())
                 }
 
                 Button(
-                    onClick = { /* Handle follow action */ },
+                    onClick = { HandleDislike(idPost, currUsername) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = Color.Black
@@ -297,7 +572,7 @@ fun PostWithoutImage(liked: Boolean) {
                         Icons.Rounded.Delete,
                         contentDescription = "Jumlah Dislike"
                     )
-                    Text(text = "95")
+                    Text(text = totalDislike.toString())
                 }
             }
             Row {
@@ -317,6 +592,84 @@ fun PostWithoutImage(liked: Boolean) {
                         contentDescription = "Jumlah Comment"
                     )
                     Text(text = " | 4 Comments")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DialogCreatePost(
+    onDismissRequest: () -> Unit,
+    onConfirmation: () -> Unit,
+    usernameSpace: String,
+    usernameUser: String
+) {
+    var description by remember { mutableStateOf("") }
+
+    fun HandleCreatePost(usernameSpace: String, usernameUser: String, description: String) {
+        if(usernameSpace.isEmpty() || usernameUser.isEmpty() || description.isEmpty()) {
+            return
+        }
+
+        val db = Firebase.firestore
+
+        val post = hashMapOf(
+            "usernameSpace" to usernameSpace,
+            "usernameUser" to usernameUser,
+            "description" to description
+        )
+
+        db.collection("posts")
+            .add(post)
+            .addOnSuccessListener { documentReference ->
+//                Log.d("CreatePost", "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+//                Log.w("CreatePost", "Error adding document", e)
+            }
+    }
+
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Post for @$usernameSpace"
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") }
+                )
+                Button(
+                    onClick =
+                    {
+                        HandleCreatePost(usernameSpace, usernameUser, description)
+                        onConfirmation()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black,
+                        contentColor = Color.White
+                    ),
+                    border = BorderStroke(1.dp, Color.Black),
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .size(width = 120.dp, height = 36.dp)
+                        .clip(CircleShape)
+                ) {
+                    Text(text = "Post")
                 }
             }
         }

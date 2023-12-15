@@ -20,7 +20,7 @@ fun NavigationGraph(
         composable("detail/{username}") { navBackStackEntry ->
             val username = navBackStackEntry.arguments?.getString("username")
             if (username != null) {
-                DetailSpace(navController, username)
+                DetailSpace(navController, preferenceDatastore, username)
             }
         }
         composable(NavigationItem.Login.route) { Login(navController, preferenceDatastore) }
