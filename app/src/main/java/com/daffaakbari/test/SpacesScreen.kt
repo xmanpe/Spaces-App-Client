@@ -164,13 +164,7 @@ fun OwnedSpaceListItem(spaceName: String, spaceUsername: String, description: St
                     oldValue = "{username}",
                     newValue = spaceUsername
                 )
-        ) {
-            launchSingleTop = true
-            restoreState = true
-            popUpTo(navController.graph.startDestinationId) {
-                saveState = true
-            }
-        }
+        )
     }
 
     Row(

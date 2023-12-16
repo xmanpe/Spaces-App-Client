@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,7 +66,9 @@ data class PostDetail(
     val idPost: String,
     val usernameSpace: String,
     val usernameUser: String,
-    val description: String
+    val description: String,
+    val totalLike: String,
+    val totalDislike: String
 )
 
 data class ListPostLike(
@@ -145,6 +148,48 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
     // Remvoe duplicate follow
     val distinctlistFollow = listFollow.distinctBy { it.spaceUsername }
 
+    // Get total like
+    var listLike by remember { mutableStateOf(mutableListOf<ListPostLike>()) }
+    db.collection("postslike")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("PostLike", "${document.id} => ${document.data}")
+                listLike.add(
+                    ListPostLike(
+                        idPost = document.data["idPost"].toString(),
+                        usernameUser = document.data["usernameUser"].toString()
+                    )
+                )
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("PostLike", "Error getting documents.", exception)
+        }
+    // Remove duplicate data
+    val distinctListLike = listLike.distinctBy { it.usernameUser }
+
+    // Get total dislike
+    var listDislike by remember { mutableStateOf(mutableListOf<ListPostDislike>()) }
+    db.collection("postsdislike")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+//                Log.d("PostLike", "${document.id} => ${document.data}")
+                listDislike.add(
+                    ListPostDislike(
+                        idPost = document.data["idPost"].toString(),
+                        usernameUser = document.data["usernameUser"].toString()
+                    )
+                )
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("PostLike", "Error getting documents.", exception)
+        }
+    // Remove duplicate data
+    val distinctListDislike = listDislike.distinctBy { it.usernameUser }
+
     // Get all post
     var listPost by remember { mutableStateOf(mutableListOf<PostDetail>()) }
 
@@ -153,13 +198,31 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
         .addOnSuccessListener { result ->
             for (document in result) {
 //                Log.d("DetailGetPost", "${document.id} => ${document.data}")
+                var totalLike = 0
+                var totalDislike = 0
                 if(document.data["usernameSpace"].toString() == usernameSpace) {
+                    // Get total like on a post
+                    for(item in distinctListLike) {
+                        if(item.idPost == document.id) {
+                            totalLike++
+                        }
+                    }
+
+                    // Get total dislike on a post
+                    for(item in distinctListDislike) {
+                        if(item.idPost == document.id) {
+                            totalDislike++
+                        }
+                    }
+
                     listPost.add(
                         PostDetail(
                             document.id,
                             document.data["usernameSpace"].toString(),
                             document.data["usernameUser"].toString(),
                             document.data["description"].toString(),
+                            totalLike.toString(),
+                            totalDislike.toString()
                         )
                     )
                 }
@@ -183,6 +246,7 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
         }
     }
 
+    // Get total post in a space
     for(item in distinctListPost) {
         if(item.usernameSpace == usernameSpace) {
             totalPost++
@@ -208,7 +272,10 @@ fun DetailSpace(navController: NavHostController, preferenceDatastore: Preferenc
                     idPost = distinctListPost[index].idPost,
                     usernameUser = distinctListPost[index].usernameUser,
                     description = distinctListPost[index].description,
-                    currUsername = currUsername
+                    currUsername = currUsername,
+                    totalLike = distinctListPost[index].totalLike,
+                    totalDislike = distinctListPost[index].totalDislike,
+                    navController = navController
                 )
             }
         }
@@ -398,66 +465,17 @@ fun HeaderDetailSpace(
 }
 
 @Composable
-fun PostWithoutImage(idPost: String, usernameUser: String, description: String, currUsername: String) {
-    var totalLike = 0
-    var totalDislike = 0
-
-    val db = Firebase.firestore
-    // Get total like
-    var listLike by remember { mutableStateOf(mutableListOf<ListPostLike>()) }
-    db.collection("postslike")
-        .get()
-        .addOnSuccessListener { result ->
-            for (document in result) {
-//                Log.d("PostLike", "${document.id} => ${document.data}")
-                listLike.add(
-                    ListPostLike(
-                        idPost = document.data["idPost"].toString(),
-                        usernameUser = document.data["usernameUser"].toString()
-                    )
-                )
-            }
-        }
-        .addOnFailureListener { exception ->
-            Log.w("PostLike", "Error getting documents.", exception)
-        }
-    // Remove duplicate data
-    val distinctListLike = listLike.distinctBy { it.usernameUser }
-
-    // Get total dislike
-    var listDislike by remember { mutableStateOf(mutableListOf<ListPostDislike>()) }
-    db.collection("postsdislike")
-        .get()
-        .addOnSuccessListener { result ->
-            for (document in result) {
-//                Log.d("PostLike", "${document.id} => ${document.data}")
-                listDislike.add(
-                    ListPostDislike(
-                        idPost = document.data["idPost"].toString(),
-                        usernameUser = document.data["usernameUser"].toString()
-                    )
-                )
-            }
-        }
-        .addOnFailureListener { exception ->
-            Log.w("PostLike", "Error getting documents.", exception)
-        }
-    // Remove duplicate data
-    val distinctListDislike = listDislike.distinctBy { it.usernameUser }
-    Log.d("test1", distinctListLike.toString())
-    Log.d("test2", distinctListDislike.toString())
-
-    for(item in distinctListLike) {
-        if(item.idPost == idPost) {
-            totalLike++
-            Log.d("totallike", totalLike.toString())
-        }
-    }
-
-    for(item in distinctListDislike) {
-        if(item.idPost == idPost) {
-            totalDislike++
-        }
+fun PostWithoutImage(
+    idPost: String,
+    usernameUser: String,
+    description: String,
+    currUsername: String,
+    totalLike: String,
+    totalDislike: String,
+    navController: NavHostController
+) {
+    fun NavigateToDetailPost() {
+        navController.navigate("detailpost")
     }
 
     fun HandleLike(idPost: String, currUsername: String) {
@@ -510,6 +528,7 @@ fun PostWithoutImage(idPost: String, usernameUser: String, description: String, 
             .padding(16.dp)
             .background(Color.LightGray, RoundedCornerShape(10.dp))
             .border(2.dp, Color.Transparent, RoundedCornerShape(10.dp))
+            .clickable { NavigateToDetailPost() }
             .padding(8.dp)
     ) {
         // User post
@@ -565,7 +584,7 @@ fun PostWithoutImage(idPost: String, usernameUser: String, description: String, 
                         Icons.Rounded.FavoriteBorder,
                         contentDescription = "Jumlah Like"
                     )
-                    Text(text = totalLike.toString())
+                    Text(text = totalLike)
                 }
 
                 Button(
@@ -583,7 +602,7 @@ fun PostWithoutImage(idPost: String, usernameUser: String, description: String, 
                         Icons.Rounded.Delete,
                         contentDescription = "Jumlah Dislike"
                     )
-                    Text(text = totalDislike.toString())
+                    Text(text = totalDislike)
                 }
             }
             Row {
