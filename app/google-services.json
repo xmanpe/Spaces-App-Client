@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "344660798592",
+    "project_id": "spaces-1751c",
+    "storage_bucket": "spaces-1751c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344660798592:android:0d6865a276e486e0cc4a65",
+        "android_client_info": {
+          "package_name": "com.daffaakbari.test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4oNFw47-1t9At6S1aOe-pxN8oHEtLtxw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
