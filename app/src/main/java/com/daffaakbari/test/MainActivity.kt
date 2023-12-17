@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("CoroutineCreationDuringComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             var checkCurrUsername by remember { mutableStateOf("") }
             var preferenceDatastore = PreferenceDatastore(this)
