@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ import com.google.firebase.storage.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
@@ -50,6 +53,8 @@ data class posts (
     val usernameUser : String,
     val image : String
 )
+
+
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun FollowingScreen(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
@@ -92,14 +97,20 @@ fun FollowingScreen(navController: NavHostController, preferenceDatastore: Prefe
 
     Column(modifier = Modifier
         .fillMaxSize()
+        .verticalScroll(rememberScrollState())
     ) {
         TopAppBarWithSearch("Following")
         for (item in distinctListFollowedPosts) {
-            LaunchedEffect(key1 = imageRef) {
+            launch {
                 imageRef = getPost(item.image)
+                Log.d("imageRef1", imageRef)
             }
+//            LaunchedEffect(key1 = imageRef) {
+//                imageRef = getPost(item.image)
+//                Log.d("imageRef1", imageRef)
+//            }
+            Log.d("imageRef2", imageRef)
             ListFollowedSpace(item,imageRef)
-
         }
 
     }
@@ -107,6 +118,7 @@ fun FollowingScreen(navController: NavHostController, preferenceDatastore: Prefe
 
 @Composable
 fun ListFollowedSpace(listFollowedposts: posts, image :String) {
+    Log.d("image", image)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
