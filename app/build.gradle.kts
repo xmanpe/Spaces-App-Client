@@ -86,4 +86,7 @@ dependencies {
     //coil for downloding image from url
 
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // bycrypt
+    implementation("com.ToxicBakery.library.bcrypt:bcrypt:+")
 }

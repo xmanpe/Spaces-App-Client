@@ -34,16 +34,13 @@ import coil.compose.rememberAsyncImagePainter
 import com.daffaakbari.test.session.PreferenceDatastore
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import java.util.concurrent.CompletableFuture
 
 
 data class posts (
@@ -54,15 +51,14 @@ data class posts (
     val image : String
 )
 
-
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun FollowingScreen(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
+fun FollowingScreen(navController: NavHostController, preferenceDatastore: PreferenceDatastore){
+    var currUsername by remember { mutableStateOf("") }
+//    var listFollowedPosts: MutableList<posts> = mutableListOf()
     var listFollowedPosts by remember { mutableStateOf(mutableListOf<posts>()) }
     val db = Firebase.firestore
 
-    //get the current user session
-    var currUsername by remember { mutableStateOf("") }
     CoroutineScope(Dispatchers.IO).launch {
         preferenceDatastore.getSession().collect{
             withContext(Dispatchers.Main) {
@@ -70,66 +66,91 @@ fun FollowingScreen(navController: NavHostController, preferenceDatastore: Prefe
             }
         }
     }
+    Log.d("currUsername", currUsername)
     db.collection("posts")
         .get()
         .addOnSuccessListener { result ->
             for (document in result) {
-                Log.d("document_id", "${document.id} => ${document.data}")
-                // Check if currUser have a space
-                if(document.data["usernameUser"].toString() == currUsername) {
-                    listFollowedPosts.add(
-                        posts(
-                            document.id,
-                            document.data["name"].toString(),
-                            document.data["username"].toString(),
-                            document.data["description"].toString(),
-                            document.data["image"].toString()
-                        )
+                Log.d("satu", "${document.id} => ${document.data}")
+                listFollowedPosts.add(
+                    posts(
+                        document.id,
+                        document.data["usernameSpace"].toString(),
+                        document.data["usernameUser"].toString(),
+                        document.data["description"].toString(),
+                        document.data["image"].toString()
+
                     )
-                }
+                )
             }
         }
         .addOnFailureListener { exception ->
-            Log.w("SPACES", "Error getting documents.", exception)
+            Log.w("HomeGetAllFollow", "Error getting documents.", exception)
         }
-    var distinctListFollowedPosts = listFollowedPosts.distinctBy { it.document_id }
-    var imageRef by remember { mutableStateOf("") }
-
+//    var tai = listFollowedPosts.distinctBy { it.document_id }
     Column(modifier = Modifier
         .fillMaxSize()
-        .verticalScroll(rememberScrollState())
-    ) {
+        .background(Color(255, 255, 255, 1))
+        .verticalScroll(rememberScrollState())){
         TopAppBarWithSearch("Following")
-        for (item in distinctListFollowedPosts) {
-            launch {
-                imageRef = getPost(item.image)
-                Log.d("imageRef1", imageRef)
+        for(item in listFollowedPosts.distinctBy { it.document_id }){
+            var imageRef by remember { mutableStateOf("") }
+
+            LaunchedEffect(item) {
+                // Perform asynchronous operation using coroutine
+                imageRef = getPost(item.image).await()
             }
-//            LaunchedEffect(key1 = imageRef) {
-//                imageRef = getPost(item.image)
-//                Log.d("imageRef1", imageRef)
-//            }
-            Log.d("imageRef2", imageRef)
-            ListFollowedSpace(item,imageRef)
+            ListFollowedSpace(item, imageRef)
+        }
+    }
+
+}
+
+@SuppressLint("CoroutineCreationDuringComposition")
+suspend fun FollowingPosts(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
+    var listFollowedPosts: MutableList<posts> = mutableListOf()
+    val db = Firebase.firestore
+    //get the current user session
+//    try {
+    db.collection("posts")
+        .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+            Log.d("HomeGetAllFollow", "${document.id} => ${document.data}")
+                listFollowedPosts.add(
+                    posts(
+                        document.id,
+                        document.data?.get("name").toString(),
+                        document.data?.get("username").toString(),
+                        document.data?.get("description").toString(),
+                        document.data?.get("image").toString()
+                    )
+                )
+            }
+        }
+        .addOnFailureListener { exception ->
+            Log.w("HomeGetAllFollow", "Error getting documents.", exception)
         }
 
-    }
+
 }
 
 @Composable
-fun ListFollowedSpace(listFollowedposts: posts, image :String) {
-    Log.d("image", image)
+fun ListFollowedSpace(item: posts, image:String) {
+    Log.d("image", item.toString())
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .padding(8.dp)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(
+                Color(0.9647f, 0.9647f, 0.9647f, 1f)
+            )
             .clip(RoundedCornerShape(16.dp))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.LightGray)
+
         ) {
             Row(){
                 Image(
@@ -143,12 +164,11 @@ fun ListFollowedSpace(listFollowedposts: posts, image :String) {
                 Column() {
                     Row (){
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "@Joshua anjing")
+                        Text(text = "@"+ item.usernameSpace)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(text = "1h")
-
                     }
-                    Text(text ="Healing ke bali dulu gk sih")
+                    Text(item.description)
                     Image(
                         painter = rememberAsyncImagePainter(image),
                         contentDescription = "lala",
@@ -164,14 +184,22 @@ fun ListFollowedSpace(listFollowedposts: posts, image :String) {
     }
 }
 
-suspend fun getPost(image: String):String = suspendCancellableCoroutine{ continuation->
-    var storage = Firebase.storage("gs://spaces-1751c.appspot.com")
-    var storageRef = storage.reference
-    var spaceRef = "aaa"
-    storageRef.child(image).downloadUrl.addOnSuccessListener { uri->
-        spaceRef = uri.toString()
-        continuation.resume(spaceRef)
-    }.addOnFailureListener {exception->
-        continuation.resumeWithException(exception)
-    }
+fun getPost(image: String): CompletableFuture<String> {
+    val storage = Firebase.storage("gs://spaces-1751c.appspot.com")
+    val storageRef = storage.reference
+    val future = CompletableFuture<String>()
+    var spaceRef = ""
+
+    storageRef.child(image).downloadUrl
+        .addOnSuccessListener { uri ->
+            spaceRef = uri.toString()
+            Log.d("spaceRef2", spaceRef)
+            future.complete(spaceRef)
+
+        }
+        .addOnFailureListener { exception ->
+            future.completeExceptionally(exception)
+
+        }
+    return future
 }
