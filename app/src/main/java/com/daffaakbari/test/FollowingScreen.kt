@@ -1,5 +1,6 @@
 package com.daffaakbari.test
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,35 +30,54 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.daffaakbari.test.session.PreferenceDatastore
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
-data class postsAsal (
+data class posts (
     val description : String,
     val usernameSpace : String,
     val usernameUser : String,
+    val image : String
 )
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun FollowingScreen() {
-    var listFollowedUser by remember { mutableStateOf(mutableListOf<postsAsal>()) }
+fun FollowingScreen(navController: NavHostController, preferenceDatastore: PreferenceDatastore) {
+    var listFollowedPosts by remember { mutableStateOf(mutableListOf<posts>()) }
     val db = Firebase.firestore
+
+    //get the current user session
+    var currUsername by remember { mutableStateOf("") }
+    CoroutineScope(Dispatchers.IO).launch {
+        preferenceDatastore.getSession().collect{
+            withContext(Dispatchers.Main) {
+                Log.d("CreateSpace", it.toString())
+                currUsername = it.username
+            }
+        }
+    }
     db.collection("posts")
         .get()
         .addOnSuccessListener { result ->
             for (document in result) {
                 Log.d("SPACES", "${document.id} => ${document.data}")
                 // Check if currUser have a space
-//                if(document.data["usernameUser"].toString() == currUsername) {
-//                    listOwnedSpace.add(
-//                        OwnedSpaceItem(
-//                            document.data["name"].toString(),
-//                            document.data["username"].toString(),
-//                            document.data["description"].toString(),
-//                            navController
-//                        )
-//                    )
-//                }
+                if(document.data["usernameUser"].toString() == currUsername) {
+                    listFollowedPosts.add(
+                        posts(
+                            document.data["name"].toString(),
+                            document.data["username"].toString(),
+                            document.data["description"].toString(),
+                            document.data["image"].toString()
+                        )
+                    )
+                }
             }
         }
         .addOnFailureListener { exception ->
@@ -127,9 +147,6 @@ fun ListFollowedSpace() {
                                     .height(200.dp)
                                     .width(200.dp)
                             )
-
-
-
                         }
                     }
 
