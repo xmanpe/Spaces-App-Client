@@ -26,6 +26,11 @@ fun NavigationGraph(
         composable(NavigationItem.Login.route) { Login(navController, preferenceDatastore) }
         composable(NavigationItem.Register.route) { Register(navController) }
         composable(NavigationItem.CreateSpace.route) { CreateSpace(navController, preferenceDatastore) }
-        composable(NavigationItem.DetailPost.route) { DetailPost(navController) }
+        composable("detailpost/{document}") { navBackStackEntry ->
+            val document = navBackStackEntry.arguments?.getString("document")
+            if (document != null) {
+                DetailPost(navController, preferenceDatastore, document)
+            }
+        }
     }
 }
