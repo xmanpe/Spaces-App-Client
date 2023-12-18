@@ -93,12 +93,18 @@ fun FollowingScreen(navController: NavHostController, preferenceDatastore: Prefe
         .background(Color(255, 255, 255, 1))
         .verticalScroll(rememberScrollState())){
         TopAppBarWithSearch("Following")
-        for(item in listFollowedPosts.distinctBy { it.document_id }){
+        val distinctFollowed = listFollowedPosts.distinctBy { it.usernameSpace }
+        for(item in distinctFollowed){
             var imageRef by remember { mutableStateOf("") }
 
             LaunchedEffect(item) {
                 // Perform asynchronous operation using coroutine
-                imageRef = getPost(item.image).await()
+                if(item.image != "null"){
+                    imageRef = getPost(item.image).await()
+                }else {
+                    imageRef = "null"
+                }
+
             }
             ListFollowedSpace(item, imageRef)
         }
@@ -137,7 +143,7 @@ suspend fun FollowingPosts(navController: NavHostController, preferenceDatastore
 
 @Composable
 fun ListFollowedSpace(item: posts, image:String) {
-    Log.d("image", item.toString())
+    Log.d("image",image)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -153,14 +159,17 @@ fun ListFollowedSpace(item: posts, image:String) {
 
         ) {
             Row(){
-                Image(
-                    painter = rememberAsyncImagePainter(image),
-                    contentDescription = "Space Image",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.LightGray)
-                )
+                if(image != "null"){
+                    Image(
+                        painter = rememberAsyncImagePainter(image),
+                        contentDescription = "Space Image",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.LightGray)
+                    )
+                }
+
                 Column() {
                     Row (){
                         Spacer(modifier = Modifier.height(8.dp))
@@ -169,14 +178,16 @@ fun ListFollowedSpace(item: posts, image:String) {
                         Text(text = "1h")
                     }
                     Text(item.description)
-                    Image(
-                        painter = rememberAsyncImagePainter(image),
-                        contentDescription = "lala",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .height(200.dp)
-                            .width(200.dp)
-                    )
+                    if(image != "null") {
+                        Image(
+                            painter = rememberAsyncImagePainter(image),
+                            contentDescription = "lala",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .height(200.dp)
+                                .width(200.dp)
+                        )
+                    }
                 }
             }
 
