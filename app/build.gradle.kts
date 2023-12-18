@@ -12,8 +12,8 @@ android {
         applicationId = "com.daffaakbari.test"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -23,6 +23,7 @@ android {
 
     buildTypes {
         release {
+            isDebuggable = false
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -71,6 +72,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
+    // Camera
+    implementation("io.coil-kt:coil-compose:1.4.0")
+
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-analytics")
 
@@ -83,4 +87,11 @@ dependencies {
 
     //coil for downloding image from url
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // Hash
+    implementation("org.mindrot:jbcrypt:0.4")
+
+    // Crypto to encrypt
+    implementation("com.google.crypto.tink:tink-android:1.7.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha03")
 }

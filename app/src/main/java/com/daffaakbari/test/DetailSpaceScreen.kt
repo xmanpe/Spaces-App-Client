@@ -477,7 +477,13 @@ fun PostWithoutImage(
     navController: NavHostController
 ) {
     fun NavigateToDetailPost() {
-        navController.navigate("detailpost")
+        navController.navigate(
+            "detailpost/{document}"
+                .replace(
+                    oldValue = "{document}",
+                    newValue = idPost
+                )
+        )
     }
 
     fun HandleLike(idPost: String, currUsername: String) {
@@ -586,7 +592,7 @@ fun PostWithoutImage(
                         Icons.Rounded.FavoriteBorder,
                         contentDescription = "Jumlah Like"
                     )
-                    Text(text = totalLike)
+//                    Text(text = totalLike)
                 }
 
                 Button(
@@ -604,7 +610,7 @@ fun PostWithoutImage(
                         Icons.Rounded.Delete,
                         contentDescription = "Jumlah Dislike"
                     )
-                    Text(text = totalDislike)
+//                    Text(text = totalDislike)
                 }
             }
             Row {
