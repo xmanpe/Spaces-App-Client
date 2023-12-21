@@ -655,7 +655,8 @@ fun DialogCreatePost(
         val post = hashMapOf(
             "usernameSpace" to usernameSpace,
             "usernameUser" to usernameUser,
-            "description" to description
+            "description" to description,
+            "image" to "null"
         )
 
         db.collection("posts")
